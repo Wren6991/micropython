@@ -69,7 +69,8 @@ SECTIONS
          * FLASH ... we will include any thing excluded here in .data below by default */
         *(.init)
         /* Change for MicroPython... excluse gc.c, parse.c, vm.c from flash */
-        *(EXCLUDE_FILE(*libgcc.a: *libc.a: *lib_a-mem*.o *libm.a: *gc.c.obj *vm.c.obj *parse.c.obj) .text*)
+        /* (also punt DVI into flash, quick hack, I do see occasional late encode caused by eviction) */
+*(EXCLUDE_FILE(*libgcc.a: *libc.a: *lib_a-mem*.o *libm.a: *gc.c.obj *vm.c.obj *parse.c.obj *queue*.c.obj *dvi*.c.obj) .text*)
         *(.fini)
         /* Pull all c'tors into .text */
         *crtbegin.o(.ctors)

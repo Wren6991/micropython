@@ -32,6 +32,12 @@
 #include "uart.h"
 #include "hardware/rtc.h"
 
+#include "mpconfigport.h"
+
+#if PICODVI_STDOUT_ENABLE
+#include "dvi_stdout.h"
+#endif
+
 #if MICROPY_HW_ENABLE_UART_REPL
 
 #ifndef UART_BUFFER_LEN
@@ -103,6 +109,10 @@ int mp_hal_stdin_rx_chr(void) {
 void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
     #if MICROPY_HW_ENABLE_UART_REPL
     mp_uart_write_strn(str, len);
+    #endif
+
+    #if PICODVI_STDOUT_ENABLE
+    dvi_write_strn(str, len);
     #endif
 
     #if MICROPY_HW_ENABLE_USBDEV

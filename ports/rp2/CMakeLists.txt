@@ -13,6 +13,7 @@ if (PICO_SDK_PATH_OVERRIDE)
 else()
     set(PICO_SDK_PATH ../../lib/pico-sdk)
 endif()
+set(LIBDVI_PATH ../../lib/picodvi/software/libdvi)
 
 # Include component cmake fragments
 include(micropy_py.cmake)
@@ -48,6 +49,8 @@ set(SOURCE_DRIVERS
 )
 
 set(SOURCE_PORT
+    dvi_main.c
+    dvi_stdout.c
     machine_adc.c
     machine_i2c.c
     machine_pin.c
@@ -130,6 +133,17 @@ target_compile_definitions(${MICROPYTHON_TARGET} PRIVATE
     PICO_NO_BI_STDIO_UART=1 # we call it UART REPL
 )
 
+# Dodgily pull in and configure libdvi
+add_subdirectory(${LIBDVI_PATH} libdvi)
+target_compile_definitions(${MICROPYTHON_TARGET} PRIVATE
+    DVI_VERTICAL_REPEAT=1
+    DVI_N_TMDS_BUFFERS=3
+    DVI_MONOCHROME_TMDS
+)
+target_include_directories(${MICROPYTHON_TARGET} PRIVATE
+    ${LIBDVI_PATH}/../assets
+)
+
 target_link_libraries(${MICROPYTHON_TARGET}
     hardware_adc
     hardware_dma
@@ -144,6 +158,7 @@ target_link_libraries(${MICROPYTHON_TARGET}
     pico_stdlib_headers
     pico_stdlib
     tinyusb_device
+    libdvi
 )
 
 # todo this is a bit brittle, but we want to move a few source files into RAM (which requires

@@ -87,7 +87,7 @@
 #define MICROPY_PY_SYS_STDFILES                 (1)
 #define MICROPY_PY_SYS_STDIO_BUFFER             (1)
 #define MICROPY_PY_SYS_PLATFORM                 "rp2"
-#define MICROPY_PY_THREAD                       (1)
+#define MICROPY_PY_THREAD                       (0)
 #define MICROPY_PY_THREAD_GIL                   (0)
 
 // Extended modules
@@ -116,6 +116,9 @@
 #define MICROPY_PY_FRAMEBUF                     (1)
 #define MICROPY_VFS                             (1)
 #define MICROPY_VFS_LFS2                        (1)
+
+// DVI :)
+#define PICODVI_STDOUT_ENABLE                   (1)
 
 // Use VfsLfs2's types for fileio/textio
 #define mp_type_fileio mp_type_vfs_lfs2_fileio

@@ -41,9 +41,17 @@
 #include "genhdr/mpversion.h"
 
 #include "pico/stdlib.h"
+#include "pico/multicore.h"
 #include "pico/binary_info.h"
 #include "hardware/rtc.h"
 #include "hardware/structs/rosc.h"
+#include "hardware/structs/bus_ctrl.h"
+
+#if PICODVI_STDOUT_ENABLE
+#include "dvi_stdout.h"
+#include "hardware/vreg.h"
+#define CORE_VOLTAGE VREG_VOLTAGE_1_20
+#endif
 
 extern uint8_t __StackTop, __StackBottom;
 static char gc_heap[192 * 1024];
@@ -58,6 +66,16 @@ bi_decl(bi_program_feature_group_with_flags(BINARY_INFO_TAG_MICROPYTHON,
     BI_NAMED_GROUP_SEPARATE_COMMAS | BI_NAMED_GROUP_SORT_ALPHA));
 
 int main(int argc, char **argv) {
+    #if PICODVI_STDOUT_ENABLE
+    #if MICROPY_PY_THREAD
+    #error "DVI requires use of the second core!"
+    #endif
+    vreg_set_voltage(CORE_VOLTAGE);
+    sleep_ms(5);
+    set_sys_clock_khz(DVI_TIMING.bit_clk_khz, true);
+    bus_ctrl_hw->priority = ~BUSCTRL_BUS_PRIORITY_PROC0_BITS;
+    #endif
+
     #if MICROPY_HW_ENABLE_UART_REPL
     bi_decl(bi_program_feature("UART REPL"))
     setup_default_uart();
@@ -106,6 +124,9 @@ int main(int argc, char **argv) {
         machine_pin_init();
         rp2_pio_init();
 
+        // Start scanning out DVI from the other core
+        multicore_launch_core1(dvi_main);
+
         // Execute _boot.py to set up the filesystem.
         pyexec_frozen_module("_boot.py");
 
@@ -118,11 +139,11 @@ int main(int argc, char **argv) {
         for (;;) {
             if (pyexec_mode_kind == PYEXEC_MODE_RAW_REPL) {
                 if (pyexec_raw_repl() != 0) {
-                    break;
+                    // break;   it turns out launching the second core is not idempotent :)
                 }
             } else {
                 if (pyexec_friendly_repl() != 0) {
-                    break;
+                    // break;   it turns out launching the second core is not idempotent :)
                 }
             }
         }
